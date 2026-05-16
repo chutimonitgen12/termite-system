@@ -2,8 +2,8 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกตารางเข้าฉีดปลวก (Online Realtime)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบบันทึกตารางเข้าฉีดปลวก (Mobile Responsive)</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
@@ -11,62 +11,103 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Helvetica Neue', Arial, sans-serif;
             background-color: #f4f6f9;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             color: #333;
         }
         .container {
-            max-width: 98%;
+            max-width: 100%;
             margin: 0 auto;
             background-color: #ffffff;
-            padding: 30px;
+            padding: 15px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
         .header-section {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 20px;
             border-bottom: 2px solid #eee;
             padding-bottom: 15px;
         }
-        h2 { margin: 0; color: #2c3e50; font-size: 26px; }
-        .action-box { display: flex; gap: 12px; align-items: center; }
+        @media (min-width: 768px) {
+            body { padding: 20px; }
+            .container { padding: 30px; }
+            .header-section { flex-direction: row; justify-content: space-between; align-items: center; }
+        }
+        h2 { margin: 0; color: #2c3e50; font-size: 22px; }
+        @media (min-width: 768px) { h2 { font-size: 26px; } }
+        
+        .action-box { display: flex; gap: 8px; width: 100%; justify-content: space-between; }
+        @media (min-width: 768px) { .action-box { width: auto; gap: 12px; } }
+        
         .btn {
             border: none;
-            padding: 12px 20px;
+            padding: 10px 14px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             transition: background 0.2s, transform 0.1s;
+            flex: 1;
+            text-align: center;
         }
+        @media (min-width: 768px) { .btn { padding: 12px 20px; font-size: 14px; flex: none; } }
         .btn:hover { transform: translateY(-1px); }
         .btn-add-row { background-color: #2ecc71; color: white; }
         .btn-add-row:hover { background-color: #27ae60; }
         .btn-add-col { background-color: #3498db; color: white; }
         .btn-add-col:hover { background-color: #2980b9; }
-        .btn-delete-col { background-color: #e67e22; color: white; font-size: 12px; padding: 6px 10px; border-radius: 4px; margin-left: 5px;}
+        .btn-delete-col { background-color: #e67e22; color: white; font-size: 11px; padding: 4px 8px; border-radius: 4px; margin-top: 2px; }
         .btn-delete-col:hover { background-color: #d35400; }
-        .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid #e0e0e0; }
-        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; }
-        th { background-color: #2c3e50; color: #ffffff; font-weight: 600; padding: 16px 10px; border: 1px solid #34495e; font-size: 15px; }
-        td { padding: 15px 8px; border: 1px solid #e0e0e0; vertical-align: middle; }
-        tbody tr:nth-child(even) { background-color: #fdfdfd; }
-        tbody tr:hover { background-color: #f8f9fa; }
-        .input-text-combined { width: 96%; padding: 10px 15px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; text-align: left; }
-        .visit-cell-container { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 140px; }
-        .date-input { width: 130px; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; text-align: center; box-sizing: border-box; }
-        .status-select { width: 130px; padding: 5px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid #ccc; text-align: center; cursor: pointer; }
+
+        .table-responsive { 
+            overflow-x: auto; 
+            border-radius: 8px; 
+            border: 1px solid #e0e0e0;
+            position: relative;
+        }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; font-size: 13px; min-width: 1100px; }
+        th { background-color: #2c3e50; color: #ffffff; font-weight: 600; padding: 12px 6px; border-right: 1px solid #34495e; border-bottom: 1px solid #34495e; font-size: 14px; }
+        td { padding: 10px 6px; border-right: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; vertical-align: middle; background-color: #fff; }
+        
+        /* 🌟 ฟีเจอร์เด็ด: ล็อกคอลัมน์ชื่อโครงการให้ตรึงอยู่กับที่เมื่อเลื่อนจอในมือถือ */
+        .sticky-col {
+            position: -webkit-sticky;
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background-color: #fff;
+            border-right: 2px solid #bdc3c7 !important;
+            min-width: 200px;
+            max-width: 240px;
+        }
+        th.sticky-col { background-color: #2c3e50; z-index: 3; }
+        tbody tr:nth-child(even) .sticky-col { background-color: #fdfdfd; }
+        tbody tr:hover .sticky-col { background-color: #f8f9fa; }
+
+        .input-text-combined { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 13px; text-align: left; }
+        .visit-cell-container { display: flex; flex-direction: column; gap: 4px; align-items: center; min-width: 110px; }
+        
+        /* ปรับขนาดอินพุตปฏิทินให้กระชับในมือถือ */
+        .date-input { width: 110px; padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; text-align: center; box-sizing: border-box; -webkit-appearance: none; }
+        .status-select { width: 110px; padding: 4px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #ccc; text-align: center; cursor: pointer; }
         .status-pending { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
         .status-done { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-        .date-container { display: flex; flex-direction: column; gap: 4px; align-items: center; }
-        .contract-label { font-size: 11px; color: #7f8c8d; font-weight: bold; }
-        .contract-result { background-color: #f8f9fa; border: 1px solid #dcdde1; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #2c3e50; min-width: 120px; display: inline-block; line-height: 1.5; }
-        .btn-delete-row { background-color: #e74c3c; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+
+        /* จัดโครงสร้างช่วงราคาสัญญาให้ยืดหยุ่น */
+        .contract-flex-wrapper { display: flex; flex-direction: column; gap: 6px; justify-content: center; align-items: center; }
+        @media (min-width: 992px) { .contract-flex-wrapper { flex-direction: row; gap: 8px; } }
+        
+        .date-container { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+        .contract-label { font-size: 10px; color: #7f8c8d; font-weight: bold; }
+        .contract-result { background-color: #f8f9fa; border: 1px solid #dcdde1; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; color: #2c3e50; min-width: 100px; display: inline-block; line-height: 1.4; text-align: center; }
+        
+        .btn-delete-row { background-color: #e74c3c; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
         .btn-delete-row:hover { background-color: #c0392b; }
-        .save-status { font-size: 13px; color: #2ecc71; font-style: italic; font-weight: bold; }
-        .loading-screen { text-align: center; padding: 50px; font-size: 18px; color: #7f8c8d; }
+        .save-status { font-size: 12px; color: #2ecc71; font-style: italic; font-weight: bold; }
+        .loading-screen { text-align: center; padding: 40px; font-size: 16px; color: #7f8c8d; }
     </style>
 </head>
 <body>
@@ -84,15 +125,15 @@
     </div>
     
     <div class="table-responsive">
-        <div id="loading" class="loading-screen">⏳ กำลังโหลดข้อมูลจากดาวเทียมออนไลน์...</div>
+        <div id="loading" class="loading-screen">⏳ กำลังโหลดข้อมูลออนไลน์...</div>
         <table id="mainTable" style="display: none;">
             <thead>
                 <tr id="mainHeaderRow">
-                    <th rowspan="2" style="width: 50px;">No.</th>
-                    <th rowspan="2" style="width: 380px;">ชื่อโครงการ / บ้านเลขที่</th>
-                    <th rowspan="2" style="width: 300px;">ระยะเวลาสัญญา</th>
+                    <th rowspan="2" style="width: 40px;">No.</th>
+                    <th rowspan="2" class="sticky-col">ชื่อโครงการ / บ้านเลขที่</th>
+                    <th rowspan="2" style="width: 220px;">ระยะเวลาสัญญา</th>
                     <th id="visitCountHeader" colspan="6">จำนวนครั้งที่เข้า (ระบุวันที่)</th>
-                    <th rowspan="2" style="width: 80px;">ลบ</th>
+                    <th rowspan="2" style="width: 60px;">ลบ</th>
                 </tr>
                 <tr id="subHeaderRow"></tr>
             </thead>
@@ -102,7 +143,7 @@
 </div>
 
 <script>
-    // ⚠️ นำโค้ด Firebase Config ของคุณมาวางทับช่องด้านล่างนี้ ⚠️
+    // ⚠️ นำโค้ด Firebase Config ชุดเดิมของคุณมาวางแทนที่กล่องด้านล่างนี้เลยครับ ⚠️
     const firebaseConfig = {
   apiKey: "AIzaSyBVtu1ISM_BDv2QcUK5yysusJKwizUhoZE",
   authDomain: "termite-spray.firebaseapp.com",
@@ -114,14 +155,14 @@
   measurementId: "G-1Q8HBGQBND"
 };
 
-    // เริ่มต้นเชื่อมต่อ Firebase
+    // เริ่มทำงานระบบเชื่อมโยง Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let totalVisits = 6;
     let scheduleData = [];
 
-    // ดึงข้อมูล Realtime จาก Firebase (ใครแก้ปุ๊บ ทุกเครื่องเห็นปั๊บ)
+    // ดึงข้อมูล Realtime 
     db.ref('termiteSystem').on('value', (snapshot) => {
         const data = snapshot.val();
         document.getElementById('loading').style.display = 'none';
@@ -129,7 +170,6 @@
 
         if (data) {
             totalVisits = data.totalVisits || 6;
-            // แปลงออบเจกต์เป็นอาเรย์เพื่อเอามาวาดตาราง
             scheduleData = data.customers ? Object.keys(data.customers).map(key => ({
                 fireId: key,
                 ...data.customers[key]
@@ -155,7 +195,7 @@
         if (years > 0) periodText += `${years} ปี `;
         if (months > 0) periodText += `${months} เดือน`;
         if (years === 0 && months === 0) periodText += "ระยะสั้น";
-        return `<div><strong>${periodText}</strong></div><div style="color: #e67e22; font-size:12px; font-weight:bold;">(หมดอายุ ${String(end.getMonth() + 1).padStart(2, '0')}/${end.getFullYear()})</div>`;
+        return `<div><strong>${periodText}</strong></div><div style="color: #e67e22; font-size:11px; font-weight:bold;">(หมดอายุ ${String(end.getMonth() + 1).padStart(2, '0')}/${end.getFullYear()})</div>`;
     }
 
     function renderHeaders() {
@@ -180,10 +220,12 @@
         scheduleData.forEach((row, index) => {
             const tr = document.createElement('tr');
             let rowHTML = `<td><strong>${index + 1}</strong></td>`;
-            rowHTML += `<td><input type="text" class="input-text-combined" value="${row.locationDetails || ''}" onchange="updateData('${row.fireId}', 'locationDetails', this.value)" placeholder="หมู่บ้าน และบ้านเลขที่..."></td>`;
+            
+            // ใส่คลาสคอลัมน์ล็อกตำแหน่งเหนียวหนึบ (sticky-col) 
+            rowHTML += `<td class="sticky-col"><input type="text" class="input-text-combined" value="${row.locationDetails || ''}" onchange="updateData('${row.fireId}', 'locationDetails', this.value)" placeholder="โครงการ/บ้านเลขที่..."></td>`;
             rowHTML += `
             <td>
-                <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                <div class="contract-flex-wrapper">
                     <div class="date-container">
                         <span class="contract-label">เริ่มสัญญา</span>
                         <input type="date" class="date-input" value="${row.startDate || ''}" onchange="updateData('${row.fireId}', 'startDate', this.value)">
@@ -214,48 +256,31 @@
                     </div>
                 </td>`;
             }
-            rowHTML += `<td><button class="btn-delete-row" onclick="deleteRow('${row.fireId}')">🗑️ ลบ</button></td>`;
+            rowHTML += `<td><button class="btn-delete-row" onclick="deleteRow('${row.fireId}')">🗑️</button></td>`;
             tr.innerHTML = rowHTML;
             tbody.appendChild(tr);
         });
     }
 
-    // ฟังก์ชันอัปเดตข้อมูลขึ้นคลาวด์ Firebase อัตโนมัติทันทีที่มีการเปลี่ยนแปลง
-    function updateData(fireId, field, value) {
-        showSavingStatus();
-        db.ref(`termiteSystem/customers/${fireId}`).update({ [field]: value });
-    }
-
-    function updateVisitDate(fireId, visitIndex, value) {
-        showSavingStatus();
-        db.ref(`termiteSystem/customers/${fireId}/dates/${visitIndex}`).set(value);
-    }
-
-    function updateVisitStatus(fireId, visitIndex, value) {
-        showSavingStatus();
-        db.ref(`termiteSystem/customers/${fireId}/statuses/${visitIndex}`).set(value);
-    }
-
+    function updateData(fireId, field, value) { showSavingStatus(); db.ref(`termiteSystem/customers/${fireId}`).update({ [field]: value }); }
+    function updateVisitDate(fireId, visitIndex, value) { showSavingStatus(); db.ref(`termiteSystem/customers/${fireId}/dates/${visitIndex}`).set(value); }
+    function updateVisitStatus(fireId, visitIndex, value) { showSavingStatus(); db.ref(`termiteSystem/customers/${fireId}/statuses/${visitIndex}`).set(value); saveToLocalStorage(); }
+    
     function addRow() {
         showSavingStatus();
         const newCustomerRef = db.ref('termiteSystem/customers').push();
         newCustomerRef.set({
-            locationDetails: '',
-            startDate: '',
-            endDate: '',
+            locationDetails: '', startDate: '', endDate: '',
             dates: Array(totalVisits).fill(''),
             statuses: Array(totalVisits).fill('pending')
         });
     }
 
-    function addColumn() {
-        showSavingStatus();
-        db.ref('termiteSystem').update({ totalVisits: totalVisits + 1 });
-    }
+    function addColumn() { showSavingStatus(); db.ref('termiteSystem').update({ totalVisits: totalVisits + 1 }); }
 
     function deleteLastColumn(event) {
         event.stopPropagation();
-        if (confirm(`คุณต้องการลบ "รอบที่ ${totalVisits}" ออกใช่หรือไม่?`)) {
+        if (confirm(`คุณต้องการลบ "รอบที่ ${totalVisits}" ออกใช่หรือไม่? ข้อมูลของลูกค้าทุกคนในรอบนี้จะหายไป`)) {
             showSavingStatus();
             scheduleData.forEach(row => {
                 db.ref(`termiteSystem/customers/${row.fireId}/dates/${totalVisits - 1}`).remove();
@@ -265,21 +290,14 @@
         }
     }
 
-    function deleteRow(fireId) {
-        if (confirm('คุณต้องการลบข้อมูลลูกค้ารายนี้ใช่หรือไม่?')) {
-            showSavingStatus();
-            db.ref(`termiteSystem/customers/${fireId}`).remove();
-        }
-    }
+    document.borderSpacing = 0;
+    function deleteRow(fireId) { if (confirm('คุณต้องการลบข้อมูลลูกค้ารายนี้ใช่หรือไม่?')) { showSavingStatus(); db.ref(`termiteSystem/customers/${fireId}`).remove(); } }
 
     function showSavingStatus() {
         const status = document.getElementById('saveStatus');
-        status.textContent = '☁️ กำลังซิงค์ข้อมูลขึ้นคลาวด์...';
+        status.textContent = '☁️ กำลังซิงค์ข้อมูล...';
         status.style.color = '#3498db';
-        setTimeout(() => {
-            status.textContent = '✅ ซิงค์ออนไลน์เรียบร้อย';
-            status.style.color = '#2ecc71';
-        }, 600);
+        setTimeout(() => { status.textContent = '✅ ซิงค์ออนไลน์เรียบร้อย'; status.style.color = '#2ecc71'; }, 600);
     }
 </script>
 </body>
