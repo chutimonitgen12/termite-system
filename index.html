@@ -2,494 +2,91 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>ระบบบันทึกตารางเข้าฉีดปลวก (มีระบบป๊อปอัพรูปภาพ)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตารางฉีดปลวก</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
-        html, body {
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f6f9;
-            -webkit-text-size-adjust: 100%;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Helvetica Neue', Arial, sans-serif;
-            padding: 8px;
-            box-sizing: border-box;
-            color: #333;
-        }
-        .container {
-            width: 100%;
-            background-color: #ffffff;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            box-sizing: border-box;
-        }
-        .header-section {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: flex-start;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 12px;
-        }
-        @media (min-width: 768px) {
-            body { padding: 20px; }
-            .container { padding: 25px; border-radius: 12px; }
-            .header-section { flex-direction: row; justify-content: space-between; align-items: center; }
-        }
-        h2 { margin: 0; color: #2c3e50; font-size: 18px; font-weight: bold; }
-        @media (min-width: 768px) { h2 { font-size: 24px; } }
+        :root { --bg: #1a1a1a; --card-bg: #262626; --accent: #d4af37; --text: #ffffff; }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; padding-bottom: 80px; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #444; }
         
-        .action-box { display: flex; gap: 8px; width: 100%; }
-        @media (min-width: 768px) { .action-box { width: auto; gap: 12px; } }
+        /* ปุ่มเพิ่มรายการ ย้ายมาด้านล่าง */
+        .btn-add { background: var(--accent); color: #000; width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         
-        .btn {
-            border: none;
-            padding: 10px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            flex: 1;
-            text-align: center;
-        }
-        @media (min-width: 768px) { .btn { padding: 12px 20px; font-size: 14px; flex: none; } }
-        .btn-add-row { background-color: #2ecc71; color: white; }
-        .btn-add-row:hover { background-color: #27ae60; }
-        .btn-add-col { background-color: #3498db; color: white; }
-        .btn-add-col:hover { background-color: #2980b9; }
-        .btn-delete-col { background-color: #e67e22; color: white; font-size: 10px; padding: 3px 6px; border-radius: 4px; margin-top: 2px; }
-
-        .table-responsive { 
-            width: 100%;
-            overflow-x: auto; 
-            border-radius: 8px; 
-            border: 1px solid #e0e0e0;
-            -webkit-overflow-scrolling: touch;
-        }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; font-size: 13px; min-width: 1200px; }
-        th { background-color: #2c3e50; color: #ffffff; font-weight: 600; padding: 10px 4px; border-right: 1px solid #34495e; border-bottom: 1px solid #34495e; font-size: 13px; }
-        td { padding: 8px 4px; border-right: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; vertical-align: middle; background-color: #fff; }
-        
-        .sticky-project {
-            position: -webkit-sticky;
-            position: sticky;
-            left: 0;
-            z-index: 2;
-            background-color: #fff;
-            min-width: 160px;
-            max-width: 180px;
-        }
-        th.sticky-project { background-color: #2c3e50; z-index: 3; }
-        
-        .sticky-photo {
-            position: -webkit-sticky;
-            position: sticky;
-            left: 160px; 
-            z-index: 2;
-            background-color: #fff;
-            border-right: 2px solid #bdc3c7 !important;
-            min-width: 75px;
-            max-width: 85px;
-        }
-        th.sticky-photo { background-color: #2c3e50; z-index: 3; }
-        
-        tbody tr:nth-child(even) .sticky-project, tbody tr:nth-child(even) .sticky-photo { background-color: #fdfdfd; }
-        tbody tr:hover .sticky-project, tbody tr:hover .sticky-photo { background-color: #f8f9fa; }
-
-        .image-upload-wrapper {
-            position: relative;
-            width: 65px;
-            height: 45px;
-            border: 1px dashed #aaa;
-            border-radius: 4px;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            cursor: pointer;
-            overflow: hidden;
-        }
-        .image-upload-wrapper input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 1;
-        }
-        .image-placeholder {
-            font-size: 18px;
-            color: #7f8c8d;
-        }
-        .btn-clear-img {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: rgba(231, 76, 60, 0.9);
-            color: white;
-            border: none;
-            border-radius: 0 0 0 4px;
-            width: 18px;
-            height: 18px;
-            font-size: 11px;
-            cursor: pointer;
-            line-height: 18px;
-            text-align: center;
-            padding: 0;
-            display: none;
-            z-index: 3; /* ให้อยู่เหนือฟิลด์อัปโหลด */
-        }
-        .image-upload-wrapper:hover .btn-clear-img {
-            display: block;
-        }
-
-        /* 🌟 สไตล์กล่องป๊อปอัพแสดงรูปขยายใหญ่ (Modal) */
-        .image-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-        .modal-content-wrapper {
-            position: relative;
-            max-width: 90%;
-            max-height: 75%;
-            display: flex;
-            justify-content: center;
-        }
-        .modal-img {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 6px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            object-fit: contain;
-        }
-        .modal-toolbar {
-            margin-top: 15px;
-            display: flex;
-            gap: 20px;
-        }
-        .btn-modal-close {
-            background-color: #7f8c8d;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .btn-modal-delete {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .input-text-combined { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 13px; }
-        .visit-cell-container { display: flex; flex-direction: column; gap: 4px; align-items: center; min-width: 105px; }
-        
-        .date-input { width: 105px; padding: 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; text-align: center; box-sizing: border-box; }
-        .status-select { width: 105px; padding: 5px; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid #ccc; text-align: center; cursor: pointer; }
-        .status-pending { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
-        .status-done { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-
-        .contract-flex-wrapper { display: flex; flex-direction: column; gap: 4px; justify-content: center; align-items: center; }
-        @media (min-width: 992px) { .contract-flex-wrapper { flex-direction: row; gap: 6px; } }
-        
-        .date-container { display: flex; flex-direction: column; gap: 2px; align-items: center; }
-        .contract-label { font-size: 9px; color: #7f8c8d; font-weight: bold; }
-        .contract-result { background-color: #f8f9fa; border: 1px solid #dcdde1; padding: 4px 6px; border-radius: 6px; font-size: 11px; color: #2c3e50; min-width: 90px; text-align: center; }
-        
-        .btn-delete-row { background-color: #e74c3c; color: white; border: none; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        .save-status { font-size: 11px; color: #2ecc71; font-style: italic; font-weight: bold; }
-        .loading-screen { text-align: center; padding: 30px; font-size: 14px; color: #7f8c8d; }
+        .img-box { width: 60px; height: 60px; border: 2px solid var(--accent); border-radius: 50%; background-size: cover; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #333; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .item { padding: 10px; background: #333; border-radius: 10px; text-align: center; }
+        input[type="date"] { background: #444; color: white; border: none; width: 100%; border-radius: 4px; padding: 5px; }
+        input[type="date"]:not([value=""]) { background: var(--accent); color: black; font-weight: bold; }
+        .status-select { background: #555; color: white; border: none; width: 100%; margin-top: 5px; border-radius: 4px; }
+        #photoModal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-section">
-        <div>
-            <h2>ตารางเข้าฉีดปลวก (ระบบออนไลน์)</h2>
-            <span class="save-status" id="saveStatus">เชื่อมต่อฐานข้อมูลออนไลน์เรียบร้อย</span>
-        </div>
-        <div class="action-box">
-            <button class="btn btn-add-col" onclick="addColumn()">➕ เพิ่มรอบเข้าฉีด</button>
-            <button class="btn btn-add-row" onclick="addRow()">➕ เพิ่มข้อมูลลูกค้าใหม่</button>
-        </div>
-    </div>
-    
-    <div class="table-responsive">
-        <div id="loading" class="loading-screen">⏳ กำลังโหลดข้อมูลออนไลน์...</div>
-        <table id="mainTable" style="display: none;">
-            <thead>
-                <tr id="mainHeaderRow">
-                    <th rowspan="2" style="width: 35px;">No.</th>
-                    <th rowspan="2" class="sticky-project">ชื่อโครงการ / บ้านเลขที่</th>
-                    <th rowspan="2" class="sticky-photo">รูปหน้างาน</th>
-                    <th rowspan="2" style="width: 180px;">ระยะเวลาสัญญา</th>
-                    <th id="visitCountHeader" colspan="6">จำนวนครั้งที่เข้า (ระบุวันที่)</th>
-                    <th rowspan="2" style="width: 45px;">ลบ</th>
-                </tr>
-                <tr id="subHeaderRow"></tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+    <h2 style="text-align:center; color:var(--accent);">👑 ตารางสรุปงานฉีดปลวก</h2>
+    <div id="cardContainer"></div>
+    <button class="btn-add" onclick="addRow()">➕ เพิ่มลูกค้าใหม่</button>
 </div>
 
-<div id="photoModal" class="image-modal" onclick="closeModal()">
-    <div class="modal-content-wrapper" onclick="event.stopPropagation()">
-        <img id="modalImg" class="modal-img" src="" alt="ขยายรูปหน้างาน">
-    </div>
-    <div class="modal-toolbar" onclick="event.stopPropagation()">
-        <button id="modalDeleteBtn" class="btn-modal-delete">🗑️ ลบรูปภาพนี้</button>
-        <button class="btn-modal-close" onclick="closeModal()">ปิดหน้าต่าง</button>
-    </div>
+<div id="photoModal" onclick="this.style.display='none'">
+    <img id="modalImg" style="max-width:90%; border: 3px solid var(--accent);">
 </div>
 
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyBVtu1ISM_BDv2QcUK5yysusJKwizUhoZE",
-        authDomain: "termite-spray.firebaseapp.com",
         databaseURL: "https://termite-spray-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "termite-spray",
-        storageBucket: "termite-spray.firebasestorage.app",
-        messagingSenderId: "104414411152",
-        appId: "1:104414411152:web:266b2717b00450e2f41b15",
-        measurementId: "G-1Q8HBGQBND"
+        projectId: "termite-spray"
     };
-
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let totalVisits = 6;
-    let scheduleData = [];
 
-    db.ref('termiteSystem').on('value', (snapshot) => {
-        const data = snapshot.val();
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('mainTable').style.display = 'table';
-        if (data) {
-            totalVisits = data.totalVisits || 6;
-            scheduleData = data.customers ? Object.keys(data.customers).map(key => ({
-                fireId: key, ...data.customers[key]
-            })) : [];
-        } else {
-            totalVisits = 6;
-            scheduleData = [];
-        }
-        renderTable();
+    db.ref('termiteSystem/customers').on('value', (snap) => {
+        const container = document.getElementById('cardContainer');
+        container.innerHTML = '';
+        const data = snap.val() || {};
+        Object.keys(data).forEach((id, index) => {
+            const row = data[id];
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                    <div style="background:var(--accent); color:#000; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">${index + 1}</div>
+                    <input type="text" style="flex:1; background:transparent; border:none; color:white; font-size:16px; font-weight:bold;" value="${row.locationDetails || ''}" placeholder="ชื่อโครงการ..." onchange="update('${id}', 'locationDetails', this.value)">
+                    <button onclick="deleteRow('${id}')">🗑️</button>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <div class="img-box" style="background-image: url('${row.photoData || ''}')" onclick="openModal('${row.photoData || ''}')">📷</div>
+                    <label style="background:var(--accent); color:black; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:12px;">เปลี่ยนรูป<input type="file" style="display:none" accept="image/*" onchange="uploadImg(event, '${id}')"></label>
+                </div>
+                <div class="grid" id="grid-${id}"></div>
+            `;
+            container.appendChild(card);
+            const grid = document.getElementById(`grid-${id}`);
+            for(let i=0; i<6; i++) {
+                grid.innerHTML += `
+                    <div class="item">
+                        <input type="date" value="${(row.dates && row.dates[i]) || ''}" onchange="updateVisit('${id}', ${i}, this.value)">
+                        <select class="status-select" onchange="updateStatus('${id}', ${i}, this.value)">
+                            <option value="pending" ${row.statuses && row.statuses[i] == 'pending' ? 'selected' : ''}>⏳ รอ</option>
+                            <option value="done" ${row.statuses && row.statuses[i] == 'done' ? 'selected' : ''}>✅ เข้า</option>
+                        </select>
+                    </div>`;
+            }
+        });
     });
 
-    function getContractPeriodText(startStr, endStr) {
-        if (!startStr || !endStr) return '<span style="color:#999;">เลือกช่วงสัญญา</span>';
-        const start = new Date(startStr);
-        const end = new Date(endStr);
-        if (end < start) return '<span style="color:#e74c3c;">วันที่ผิด</span>';
-        let years = end.getFullYear() - start.getFullYear();
-        let months = end.getMonth() - start.getMonth();
-        let days = end.getDate() - start.getDate();
-        if (days < 0) months -= 1;
-        if (months < 0) { years -= 1; months += 12; }
-        let periodText = "";
-        if (years > 0) periodText += `${years} ปี `;
-        if (months > 0) periodText += `${months} ด.`;
-        if (years === 0 && months === 0) periodText += "ระยะสั้น";
-        return `<div><strong>${periodText}</strong></div><div style="color: #e67e22; font-size:10px;">(หมด ${String(end.getMonth() + 1).padStart(2, '0')}/${end.getFullYear()})</div>`;
-    }
-
-    function renderHeaders() {
-        document.getElementById('visitCountHeader').setAttribute('colspan', totalVisits);
-        const subHeaderRow = document.getElementById('subHeaderRow');
-        subHeaderRow.innerHTML = '';
-        for (let i = 1; i <= totalVisits; i++) {
-            const th = document.createElement('th');
-            th.innerHTML = `${i}`;
-            if (i === totalVisits && totalVisits > 1) {
-                th.innerHTML += `<br><button class="btn-delete-col" onclick="deleteLastColumn(event)">❌</button>`;
-            }
-            subHeaderRow.appendChild(th);
-        }
-    }
-
-    function renderTable() {
-        renderHeaders();
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-
-        scheduleData.forEach((row, index) => {
-            const tr = document.createElement('tr');
-            let rowHTML = `<td><strong>${index + 1}</strong></td>`;
-            rowHTML += `<td class="sticky-project"><input type="text" class="input-text-combined" value="${row.locationDetails || ''}" onchange="updateData('${row.fireId}', 'locationDetails', this.value)" placeholder="โครงการ/บ้านเลขที่..."></td>`;
-            
-            const hasImage = row.photoData ? `style="background-image: url('${row.photoData}')"` : '';
-            const hideIcon = row.photoData ? `style="display:none;"` : '';
-            // ถ้ามีรูป จะเปิดสิทธิ์ให้กดคลิกเพื่อดูป๊อปอัพได้ (ผ่านฟังก์ชัน openModal)
-            const clickAction = row.photoData ? `onclick="openModal('${row.photoData}', '${row.fireId}')"` : '';
-            
-            rowHTML += `
-            <td class="sticky-photo">
-                <div class="image-upload-wrapper" id="img_wrapper_${row.fireId}" ${hasImage} ${clickAction}>
-                    <span class="image-placeholder" id="img_icon_${row.fireId}" ${hideIcon}>📷</span>
-                    <button class="btn-clear-img" onclick="clearImage(event, '${row.fireId}')">×</button>
-                    ${!row.photoData ? `<input type="file" accept="image/*" onchange="uploadRowImage(this, '${row.fireId}')">` : ''}
-                </div>
-            </td>`;
-
-            rowHTML += `
-            <td>
-                <div class="contract-flex-wrapper">
-                    <div class="date-container">
-                        <span class="contract-label">เริ่ม</span>
-                        <input type="date" class="date-input" value="${row.startDate || ''}" onchange="updateData('${row.fireId}', 'startDate', this.value)">
-                    </div>
-                    <div class="date-container">
-                        <span class="contract-label">สิ้นสุด</span>
-                        <input type="date" class="date-input" value="${row.endDate || ''}" onchange="updateData('${row.fireId}', 'endDate', this.value)">
-                    </div>
-                    <div class="contract-result">
-                        ${getContractPeriodText(row.startDate, row.endDate)}
-                    </div>
-                </div>
-            </td>`;
-            
-            for (let i = 0; i < totalVisits; i++) {
-                const dateVal = (row.dates && row.dates[i]) ? row.dates[i] : '';
-                const statusVal = (row.statuses && row.statuses[i]) ? row.statuses[i] : 'pending';
-                const statusClass = statusVal === 'done' ? 'status-done' : 'status-pending';
-
-                rowHTML += `
-                <td>
-                    <div class="visit-cell-container">
-                        <input type="date" class="date-input" value="${dateVal}" onchange="updateVisitDate('${row.fireId}', ${i}, this.value)">
-                        <select class="status-select ${statusClass}" onchange="updateVisitStatus('${row.fireId}', ${i}, this.value)">
-                            <option value="pending" ${statusVal === 'pending' ? 'selected' : ''}>⏳ รอ</option>
-                            <option value="done" ${statusVal === 'done' ? 'selected' : ''}>✅ เข้าแล้ว</option>
-                        </select>
-                    </div>
-                </td>`;
-            }
-            rowHTML += `<td><button class="btn-delete-row" onclick="deleteRow('${row.fireId}')">🗑️</button></td>`;
-            tr.innerHTML = rowHTML;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function uploadRowImage(input, fireId) {
-        if (input.files && input.files[0]) {
-            showSavingStatus();
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                let img = new Image();
-                img.onload = function() {
-                    let canvas = document.createElement('canvas');
-                    let ctx = canvas.getContext('2d');
-                    let maxWidth = 500; // เพิ่มความละเอียดขึ้นเป็น 500px เพื่อเวลาขยายดูรูปใหญ่จะได้ยังชัดเจนอยู่ครับ
-                    let scale = Math.min(maxWidth / img.width, 1);
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    let compressedBase64 = canvas.toDataURL('image/jpeg', 0.65); 
-                    db.ref(`termiteSystem/customers/${fireId}`).update({ photoData: compressedBase64 });
-                }
-                img.src = e.target.result;
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    function clearImage(event, fireId) {
-        if(event) event.stopPropagation(); // กันไม่ให้ป๊อปอัพเด้งขึ้นมาซ้อนตอนกดปุ่มลบตรงกากบาท
-        if(confirm('คุณต้องการลบรูปภาพนี้ใช่หรือไม่?')) {
-            showSavingStatus();
-            closeModal(); // สั่งปิดหน้าต่างโมดอลทันทีหากมีการกดลบจากข้างในป๊อปอัพ
-            db.ref(`termiteSystem/customers/${fireId}/photoData`).remove();
-        }
-    }
-
-    // 🌟 ฟังก์ชันสำหรับเปิดป๊อปอัพรูปภาพขยายใหญ่
-    function openModal(base64Src, fireId) {
-        const modal = document.getElementById('photoModal');
-        const modalImg = document.getElementById('modalImg');
-        const deleteBtn = document.getElementById('modalDeleteBtn');
-        
-        modalImg.src = base64Src;
-        modal.style.display = 'flex';
-        
-        // ผูกฟังก์ชันลบรูปเข้ากับปุ่มถังขยะในป๊อปอัพ
-        deleteBtn.onclick = function() {
-            clearImage(null, fireId);
-        };
-    }
-
-    // 🌟 ฟังก์ชันสำหรับปิดป๊อปอัพ
-    function closeModal() {
-        document.getElementById('photoModal').style.display = 'none';
-    }
-
-    function updateData(fireId, field, value) { showSavingStatus(); db.ref(`termiteSystem/customers/${fireId}`).update({ [field]: value }); }
-    function updateVisitDate(fireId, visitIndex, value) { showSavingStatus(); db.ref(`termiteSystem/customers/${fireId}/dates/${visitIndex}`).set(value); }
-    function updateVisitStatus(fireId, visitIndex, value) { showSavingStatus(); db.ref(`termiteSystem/customers/${fireId}/statuses/${visitIndex}`).set(value); }
-    
-    function addRow() {
-        showSavingStatus();
-        const newCustomerRef = db.ref('termiteSystem/customers').push();
-        newCustomerRef.set({
-            locationDetails: '', startDate: '', endDate: '', photoData: '',
-            dates: Array(totalVisits).fill(''),
-            statuses: Array(totalVisits).fill('pending')
-        });
-    }
-
-    function addColumn() { showSavingStatus(); db.ref('termiteSystem').update({ totalVisits: totalVisits + 1 }); }
-
-    function deleteLastColumn(event) {
-        event.stopPropagation();
-        if (confirm(`คุณต้องการลบ "รอบที่ ${totalVisits}" ออกใช่หรือไม่?`)) {
-            showSavingStatus();
-            scheduleData.forEach(row => {
-                db.ref(`termiteSystem/customers/${row.fireId}/dates/${totalVisits - 1}`).remove();
-                db.ref(`termiteSystem/customers/${row.fireId}/statuses/${totalVisits - 1}`).remove();
-            });
-            db.ref('termiteSystem').update({ totalVisits: totalVisits - 1 });
-        }
-    }
-
-    function deleteRow(fireId) { if (confirm('คุณต้องการลบข้อมูลลูกค้ารายนี้ใช่หรือไม่?')) { showSavingStatus(); db.ref(`termiteSystem/customers/${fireId}`).remove(); } }
-
-    function showSavingStatus() {
-        const status = document.getElementById('saveStatus');
-        status.textContent = '☁️ กำลังซิงค์...';
-        status.style.color = '#3498db';
-        setTimeout(() => { status.textContent = '✅ ซิงค์เรียบร้อย'; status.style.color = '#2ecc71'; }, 600);
-    }
+    function uploadImg(e, id) { const file = e.target.files[0]; const reader = new FileReader(); reader.onloadend = () => db.ref(`termiteSystem/customers/${id}/photoData`).set(reader.result); reader.readAsDataURL(file); }
+    function openModal(src) { if(src) { document.getElementById('modalImg').src = src; document.getElementById('photoModal').style.display = 'flex'; } }
+    function update(id, f, v) { db.ref(`termiteSystem/customers/${id}`).update({[f]: v}); }
+    function updateVisit(id, i, v) { db.ref(`termiteSystem/customers/${id}/dates/${i}`).set(v); }
+    function updateStatus(id, i, v) { db.ref(`termiteSystem/customers/${id}/statuses/${i}`).set(v); }
+    function deleteRow(id) { if(confirm('ลบรายการนี้?')) db.ref(`termiteSystem/customers/${id}`).remove(); }
+    function addRow() { db.ref('termiteSystem/customers').push({locationDetails: '', dates: Array(6).fill(''), statuses: Array(6).fill('pending')}); }
 </script>
 </body>
 </html>
